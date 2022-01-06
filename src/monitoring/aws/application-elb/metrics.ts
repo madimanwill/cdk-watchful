@@ -1,6 +1,5 @@
 import { Duration } from "aws-cdk-lib";
 import { Metric, Statistic } from "aws-cdk-lib/aws-cloudwatch";
-import { WatchedOperation } from "../../../api-gateway";
 
 const enum Metrics {
   //load balancers
@@ -13,22 +12,13 @@ const enum Metrics {
 }
 
 const Namespace = "AWS/ApplicationELB";
-const StatisticP90 = "p90";
-const StatisticP95 = "p95";
-const StatisticP99 = "p99";
 
-export class ApiGatewayMetricFactory {
-  metricHostCounts(
-    loadBalancerName: string,
-    stage: string,
-    op?: WatchedOperation
-  ) {
+export class ApplicationELBMetricFactory {
+  metricHostCounts(loadBalancerName: string) {
     return {
       HealthyHostCount: this.metric(
         Metrics.HealthyHostCount,
-        loadBalancerName,
-        stage,
-        op
+        loadBalancerName
       ).with({
         label: "Health Host Count",
         statistic: Statistic.MAXIMUM,
@@ -36,9 +26,7 @@ export class ApiGatewayMetricFactory {
       }),
       UnHealthyHostCount: this.metric(
         Metrics.UnHealthyHostCount,
-        loadBalancerName,
-        stage,
-        op
+        loadBalancerName
       ).with({
         label: "Unhealthy Host Count",
         statistic: Statistic.MAXIMUM,
@@ -47,61 +35,21 @@ export class ApiGatewayMetricFactory {
     };
   }
 
-  metricCalls(loadBalancerName: string, stage: string, op?: WatchedOperation) {
-    return this.metric(Metrics.Count, loadBalancerName, stage, op).with({
-      label: "Calls",
-      color: "#1f77b4",
+  metricActiveConnectionCount(loadBalancerName: string) {
+    return this.metric(Metrics.ActiveConnectionCount, loadBalancerName).with({
+      label: "Active Connection Count",
       statistic: Statistic.SUM,
+      color: "#ff7f0e",
     });
-    return {
-      min: baseMetric.with({ label: "min", statistic: Statistic.MINIMUM }),
-      avg: baseMetric.with({ label: "avg", statistic: Statistic.AVERAGE }),
-      p90: baseMetric.with({ label: "p90", statistic: StatisticP90 }),
-      p95: baseMetric.with({ label: "p95", statistic: StatisticP95 }),
-      p99: baseMetric.with({ label: "p99", statistic: StatisticP99 }),
-      max: baseMetric.with({ label: "max", statistic: Statistic.MAXIMUM }),
-    };
   }
 
-  metricLatency(
-    loadBalancerName: string,
-    stage: string,
-    op?: WatchedOperation
-  ) {
-    const baseMetric = this.metric(
-      Metrics.Latency,
-      loadBalancerName,
-      stage,
-      op
-    );
-
-    return {
-      min: baseMetric.with({ label: "min", statistic: Statistic.MINIMUM }),
-      avg: baseMetric.with({ label: "avg", statistic: Statistic.AVERAGE }),
-      p90: baseMetric.with({ label: "p90", statistic: StatisticP90 }),
-      p95: baseMetric.with({ label: "p95", statistic: StatisticP95 }),
-      p99: baseMetric.with({ label: "p99", statistic: StatisticP99 }),
-      max: baseMetric.with({ label: "max", statistic: Statistic.MAXIMUM }),
-    };
-  }
-
-  protected metric(
-    metricName: Metrics,
-    loadBalancerName: string,
-    stage: string,
-    op?: WatchedOperation
-  ) {
+  protected metric(metricName: Metrics, loadBalancerName: string) {
     return new Metric({
       metricName,
       namespace: Namespace,
       period: Duration.minutes(1),
       dimensionsMap: {
-        loadBalancerName: loadBalancerName,
-        Stage: stage,
-        ...(op && {
-          Method: op.httpMethod,
-          Resource: op.resourcePath,
-        }),
+        LoadBalancer: loadBalancerName,
       },
     });
   }
