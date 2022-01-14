@@ -1,5 +1,6 @@
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+
 import { Construct } from 'constructs';
 import { IWatchful } from './api';
 import { LambdaMetricFactory } from './monitoring/aws/lambda/metrics';
@@ -83,7 +84,7 @@ export class WatchLambdaFunction extends Construct {
         title: `Throttles/${throttlesMetric.period.toMinutes()}min`,
         width: 6,
         left: [throttlesMetric],
-        leftAnnotations: [throttlesAlarm.toAnnotation()],
+        leftAnnotations: [throttlesAlarm.toAnnotation()], 
       }),
       new cloudwatch.GraphWidget({
         title: `Duration/${durationMetric.period.toMinutes()}min`,
